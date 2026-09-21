@@ -1,108 +1,83 @@
-const respond = (request, response, content, statusCode, type) => {
-    // const dataType = request.headers['accept'];
-    // console.log("respond type: " + dataType);
-    response.writeHead(statusCode, { 'Content-Type': type});
+const respond = (request, response, statusCode, id, message) => {
+    const dataType= request.headers['accept'] === 'text/xml' ? 'text/xml' : 'application/json';
+
+    let content;
+    if (dataType === 'text/xml') {
+        content = `<response><id>${id}</id><message>${message}</message></response>`;
+    } else {
+        content = JSON.stringify({id:id, message: message});
+    }
+
+    response.writeHead(statusCode, { 'Content-Type': dataType});
     response.write(content);
     response.end();
 }
 
-const respondXML = (req, res, code, id, message) => {
-    const content = `<response><id>${id}</id><message>${message}</message></response>`;
-    respond(req, res, content, code, 'text/xml');
-}
-const respondJSON = (req, res, code, id, message) => {
-    const content = JSON.stringify({id:id, message: message});
-    respond(req, res, content, code, 'application/json');
-};
 
-const success = (request, response) => {
-    const id = "success";
-    const message = "This is a successful response.";
+const id200 = 'success';
+const message200 = 'This is a successful response.';
 
-    const type = request.headers['accept'];
-
-    if (type === "text/xml") {
-        respondXML(request, response, 200, id, message);
-    } else { //return JSON by default
-        respondJSON(request, response, 200, id, message);
-    }
-};
+const success = (request, response) => respond(request, response, 200, id200, message200);
 
 const badRequest = (request, response) => {
     const protocol = request.connection.encrypted ? 'https' : 'http';
     const url = new URL(request.url, `${protocol}://${request.headers.host}`);
-    const valid = url.searchParams.get("valid"); //params.get("valid");
-    console.log(valid);
     
-    const type = request.headers['accept'];
+    const valid = url.searchParams.get('valid');
+    //console.log(valid);
 
-    const successId = "success";
-    const successMessage = "This is a successful response.";
-
-    const badId = "badRequest";
-    const badMessage = "Missing valid query parameter set to true."
+    const id = 'badRequest';
+    const message = 'Missing valid query parameter set to true.';
 
     if (valid === 'true') {
-        if (type === "text/xml") {
-            respondXML(request, response, 200, successId, successMessage);
-        } else {
-            respondJSON(request, response, 200, successId, successMessage);
-        }
+        respond(request, response, 200, id200, message200);
     } else {
-        if (type === "text/xml") {
-            respondXML(request, response, 400, badId, badMessage);
-        } else {
-            respondJSON(request, response, 400, badId, badMessage);
-        }
+        respond(request, response, 400, id, message);
     }
 };
 
 const unauthorized = (request, response) => {
-    const loggedIn = request.body;
+    const protocol = request.connection.encrypted ? 'https' : 'http';
+    const url = new URL(request.url, `${protocol}://${request.headers.host}`);
+    
+    const loggedIn = url.searchParams.get('loggedIn');
 
-    const successId = "success";
-    const successMessage = "This is a successful response.";
+    const id = 'unauthorized';
+    const message = 'Missing loggedIn query parameter set to yes';
 
-    const unauthId = "unauthorized";
-    const unauthMessage = "Missing loggedIn query parameter set to yes";
-
-    if (loggedIn) {
-        if (type === "text/xml") {
-            respondXML(request, response, 400, successId, successMessage);
-        } else {
-            respondJSON(request, response, 400, successId, successMessage);
-        }
+    if (loggedIn === 'yes') {
+        respond(request, response, 200, id200, message200);
     } else {
-        if (type === "text/xml") {
-            respondXML(request, response, 401, unauthId, unauthMessage);
-        } else {
-            respondJSON(request, response, 401, unauthId, unauthMessage);
-        }
+        respond(request, response, 401, id, message);
     }
-
-    //id: "unauthorized"
-    //message: "Missing loggedIn query parameter set to yes"
 };
 
-const forbidden = () => {
-    //id: "forbidden"
-    //message: "You do not have access to this content"
+const forbidden = (request, response) => {
+    const id = 'forbidden';
+    const message = 'You do not have access to this content';
+
+    respond(request, response, 403, id, message);
 };
 
-const internal = () => {
-    //id: "unauthorized"
-    //message: "Internal Server Error. Something went wrong"
+const internal = (request, response) => {
+    const id = 'internalError';
+    const message = 'Internal Server Error. Something went wrong';
+
+    respond(request, response, 500, id, message);
 };
 
-const notImplemented = () => {
-    //id: "notImplemented"
-    //message: "A request for this page has not been implemented yet. Check again later for updated content."
+const notImplemented = (request, response) => {
+    const id = 'notImplemented';
+    const message = 'A request for this page has not been implemented yet. Check again later for updated content.';
+
+    respond(request, response, 501, id, message);
 };
 
 const notFound = (request, response) => {
-    //id: "notFound"
-    //message: "The page you are looking for was not found."
-    respondJSON(request, response, 404, 'notFound', 'The page you are looking for was not found.');
+    const id = 'notFound';
+    const message = 'The page you are looking for was not found.';
+
+    respond(request, response, 404, id, message);
 };
 
 module.exports = {

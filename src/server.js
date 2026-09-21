@@ -53,8 +53,6 @@ const parseBody = (request, response, handler) => {
 const onRequest = (request, response) => {
     const protocol = request.connection.encrypted ? 'https' : 'http';
     const parsedURL = new URL(request.url, `${protocol}://${request.headers.host}`);
-
-    //console.log("58 " + parsedURL.searchParams.get('valid'));
     
     const handler = urlStruct[parsedURL.pathname];
 
@@ -63,16 +61,6 @@ const onRequest = (request, response) => {
     } else {
         urlStruct.default(request, response);
     }
-
-    // switch (parsedURL.pathname) {
-    //     case '/':
-    //     case '/style.css':
-    //         handler(request, response);
-    //         break;
-    //     default: 
-    //         parseBody(request, response, handler);
-    //         break;
-    // }
 };
 
 http.createServer(onRequest).listen(port, () => {

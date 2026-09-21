@@ -42,7 +42,7 @@
       if (type === "text/xml") {
         parsedObj = parser.parseFromString(obj, 'text/xml');
 
-        console.log(parsedObj.getElementsByTagName("message")[0].innerHTML);
+        //console.log(parsedObj.getElementsByTagName("message")[0].innerHTML);
         if (parsedObj.message) {
           content.innerHTML += `<p>${parsedObj.getElementsByTagName("message")[0].innerHTML}</p>`;
         }
