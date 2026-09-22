@@ -1,11 +1,12 @@
 const respond = (request, response, statusCode, id, message) => {
-    const dataType= request.headers['accept'] === 'text/xml' ? 'text/xml' : 'application/json';
+    //default dataType to 'application/json' if it's not 'text/xml'
+    const dataType = request.headers['accept'] === 'text/xml' ? 'text/xml' : 'application/json';
 
     let content;
     if (dataType === 'text/xml') {
-        content = `<response><id>${id}</id><message>${message}</message></response>`;
+        content = `<response><message>${message}</message><id>${id}</id></response>`;
     } else {
-        content = JSON.stringify({id:id, message: message});
+        content = JSON.stringify({message: message, id: id});
     }
 
     response.writeHead(statusCode, { 'Content-Type': dataType});
@@ -13,11 +14,25 @@ const respond = (request, response, statusCode, id, message) => {
     response.end();
 }
 
+//Handle success response (which only has message field)
+const respondSuccess = (request, response, statusCode, message) => {
+    const dataType = request.headers['accept'] === 'text/xml' ? 'text/xml' : 'application/json';
 
-const id200 = 'success';
+    let content;
+    if (dataType === 'text/xml') {
+        content = `<response><message>${message}</message></response>`;
+    } else {
+        content = JSON.stringify({message: message});
+    }
+
+    response.writeHead(statusCode, { 'Content-Type': dataType});
+    response.write(content);
+    response.end();
+}
+
 const message200 = 'This is a successful response.';
 
-const success = (request, response) => respond(request, response, 200, id200, message200);
+const success = (request, response) => respondSuccess(request, response, 200, message200);
 
 const badRequest = (request, response) => {
     const protocol = request.connection.encrypted ? 'https' : 'http';
@@ -30,7 +45,7 @@ const badRequest = (request, response) => {
     const message = 'Missing valid query parameter set to true.';
 
     if (valid === 'true') {
-        respond(request, response, 200, id200, message200);
+        respondSuccess(request, response, 200, message200);
     } else {
         respond(request, response, 400, id, message);
     }
@@ -43,10 +58,10 @@ const unauthorized = (request, response) => {
     const loggedIn = url.searchParams.get('loggedIn');
 
     const id = 'unauthorized';
-    const message = 'Missing loggedIn query parameter set to yes';
+    const message = 'Missing loggedIn query parameter set to yes.';
 
     if (loggedIn === 'yes') {
-        respond(request, response, 200, id200, message200);
+        respondSuccess(request, response, 200, message200);
     } else {
         respond(request, response, 401, id, message);
     }
@@ -54,14 +69,14 @@ const unauthorized = (request, response) => {
 
 const forbidden = (request, response) => {
     const id = 'forbidden';
-    const message = 'You do not have access to this content';
+    const message = 'You do not have access to this content.';
 
     respond(request, response, 403, id, message);
 };
 
 const internal = (request, response) => {
     const id = 'internalError';
-    const message = 'Internal Server Error. Something went wrong';
+    const message = 'Internal Server Error. Something went wrong.';
 
     respond(request, response, 500, id, message);
 };

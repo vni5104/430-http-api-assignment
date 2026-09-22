@@ -5,7 +5,7 @@
   <link rel="stylesheet" type="text/css" href="/style.css">
   
   <script>
-    const handleResponse = async (response, type) => {
+    const handleResponse = async (response) => {
       const content = document.querySelector("#content");
 
       switch (response.status) {
@@ -36,20 +36,23 @@
       }
 
       const obj = await response.text();
+      console.log(obj); //print raw JSON/XML to console
+      
+      let parsedObj;
       const parser = new DOMParser();
 
-      let parsedObj;
-      if (type === "text/xml") {
+      const type = response.headers.get('content-type');
+      if (type === 'text/xml') {
         parsedObj = parser.parseFromString(obj, 'text/xml');
 
         //console.log(parsedObj.getElementsByTagName("message")[0].innerHTML);
-        if (parsedObj.message) {
-          content.innerHTML += `<p>${parsedObj.getElementsByTagName("message")[0].innerHTML}</p>`;
+        if (parsedObj.getElementsByTagName('message')[0].innerHTML) {
+          content.innerHTML += `<p>Message: ${parsedObj.getElementsByTagName('message')[0].innerHTML}</p>`;
         }
       } else {
         parsedObj = JSON.parse(obj);
         if (parsedObj.message) {
-          content.innerHTML += `<p>${parsedObj.message}</p>`;
+          content.innerHTML += `<p>Message: ${parsedObj.message}</p>`;
         }
       }
     };
@@ -66,7 +69,7 @@
         }
       });
 
-      handleResponse(response, type);
+      handleResponse(response);
     };
 
     const init = () => {
